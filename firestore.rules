@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: members
+    // Document ID: auto-generated
+    // Fields:
+    //   - fullName: string (required, < 100 chars)
+    //   - email: string (required, valid format, < 100 chars)
+    //   - phone: string (optional, < 20 chars)
+    //   - address: string (optional, < 500 chars)
+    //   - joinedAt: timestamp (required)
+    //   - createdBy: string (required, matches auth.uid)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "stevedfd123@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidMember(data) {
+      return data.keys().hasAll(['fullName', 'email', 'joinedAt', 'createdBy']) &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.joinedAt is timestamp &&
+             data.createdBy == request.auth.uid;
+    }
+
+    match /members/{memberId} {
+      // Only authenticated users can read member list
+      allow read: if isAuthenticated();
+      
+      // Only authenticated users can create members, and they must be the creator
+      allow create: if isAuthenticated() && isValidMember(request.resource.data);
+      
+      // Only the creator or an admin can update/delete
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.createdBy || isAdmin()) && isValidMember(request.resource.data);
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.createdBy || isAdmin());
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

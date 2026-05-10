@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "A member of the Sri Lanka Family Bible Church.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique identifier for the member document."
+        },
+        "fullName": {
+          "type": "string",
+          "description": "The full name of the member."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address of the member."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The contact phone number."
+        },
+        "address": {
+          "type": "string",
+          "description": "The residential address."
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the member joined the church."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "The UID of the user who added this member."
+        }
+      },
+      "required": ["fullName", "email", "createdBy"]
+    }
+  },
+  "firestore": {
+    "members": {
+      "schema": "Member",
+      "description": "Collection of church members."
+    }
+  }
+}
